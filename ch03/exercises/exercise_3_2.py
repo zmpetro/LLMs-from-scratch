@@ -10,7 +10,7 @@ class CausalAttention(nn.Module):
         self.W_key = nn.Linear(d_in, d_out, bias=qkv_bias)
         self.W_value = nn.Linear(d_in, d_out, bias=qkv_bias)
 
-        # Not using a dropout layer in my version
+        self.dropout = nn.Dropout(dropout)
 
         self.register_buffer("mask", torch.triu(torch.ones(context_length, context_length), diagonal=1))
 
@@ -26,6 +26,8 @@ class CausalAttention(nn.Module):
         attn_scores.masked_fill_(self.mask.bool()[:num_tokens, :num_tokens], -torch.inf)
 
         attn_weights = torch.softmax(attn_scores / keys.shape[-1] ** 0.5, dim=-1)
+
+        attn_weights = self.dropout(attn_weights)
 
         context_vec = attn_weights @ values
         return context_vec
